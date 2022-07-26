@@ -54,9 +54,27 @@ using int_t = std::intptr_t;
 
 #ifndef __cpp_char8_t
 using char8s_t = std::uint8_t;
-#else 
+#else
 using char8s_t = char8_t;
 #endif //__cpp_char8_t
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// is_any_of_v
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+template<typename type_t, typename... match_t>
+constexpr bool is_any_of_v = std::disjunction_v<std::is_same<type_t, match_t>...>;
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// is_any_char_v
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+template<typename type_t>
+constexpr bool is_any_char_v = is_any_of_v<type_t, char, char8s_t, char16_t, wchar_t, char32_t>;
 
 
 
@@ -74,7 +92,7 @@ struct is_iterator_of {
     static constexpr bool is_non_const_v = std::is_same_v<
         std::remove_reference_t<it1_t>, std::remove_const_t<std::remove_reference_t<it1_t>>>;
 
-    static constexpr bool value = std::disjunction_v<std::is_same<it_value_t, value_t>...> && is_non_const_v<it_t>;
+    static constexpr bool value = is_any_of_v<it_value_t, value_t...> && is_non_const_v<it_t>;
 };
 
 template<typename it_t, typename... value_t>
@@ -92,13 +110,26 @@ template<typename it_t, typename... value_t>
 struct is_const_iterator_of {
     using it_value_t = typename std::iterator_traits<it_t>::value_type;
 
-    static constexpr bool value = std::disjunction_v<std::is_same<it_value_t, value_t>...>;
+    static constexpr bool value = is_any_of_v<it_value_t, value_t...>;
 };
 
 template<typename it_t, typename... value_t>
 constexpr bool is_const_iterator_of_v = is_const_iterator_of<it_t, value_t...>::value;
 template<typename it_t>
 constexpr bool is_any_const_iterator_v = is_const_iterator_of_v<it_t, char, wchar_t, char8s_t, char16_t, char32_t>;
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// is_native_string_v
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+template <typename type_t>
+constexpr bool is_native_string_v = false;
+template<typename char_t, uint_t size>
+constexpr bool is_native_string_v<char_t (&)[size]> = is_any_char_v<char_t>;
+template<typename char_t, uint_t size>
+constexpr bool is_native_string_v<char_t[size]> = is_any_char_v<char_t>;
 
 
 
@@ -154,26 +185,14 @@ constexpr auto codeunit_count(const type_t& str) noexcept -> decltype(std::cbegi
 
 namespace impl
 {
-static constexpr char8s_t utf8_size_table[] = {
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 4, 1
-};
-
-static constexpr char8s_t utf8_mask_table[] = {
-    0x7f, 0x1f, 0x0f, 0x07
-};
-
-static constexpr char8s_t utf16_size_table[] = {
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1
-};
-
-static constexpr uint16_t uft16_mask_table[] = {
-    0xffff, 0x03ff
-};
+static constexpr uint64_t utf8_size_table = 0x3a55000000000000;
+static constexpr uint_t utf8_mask_table = 0x070f1f7f;
+static constexpr uint64_t utf16_size_table = 0x40000000000000;
+static constexpr uint_t uft16_mask_table = 0x03ffffff;
 
 } // namespace impl
 
-    
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // standalone routines
@@ -183,7 +202,7 @@ template<typename it_t, std::enable_if_t<is_const_iterator_of_v<it_t, char, char
 constexpr it_t codepoint_next(it_t it) noexcept
 {
     const uint_t ch = static_cast<char8s_t>(*it);
-    const uint_t offset = impl::utf8_size_table[ch >> 3];
+    const uint_t offset = ((impl::utf8_size_table >> ((ch >> 3) << 1)) & 0x3) + 1;
 
     return it + offset;
 }
@@ -195,7 +214,7 @@ template<typename it_t, std::enable_if_t<is_const_iterator_of_v<it_t, char16_t> 
 constexpr it_t codepoint_next(it_t it) noexcept
 {
     const uint_t ch = static_cast<char16_t>(*it);
-    const uint_t offset = impl::utf16_size_table[ch >> 10];
+    const uint_t offset = ((impl::utf16_size_table >> (ch >> 10)) & 0x1) + 1;
 
     return it + offset;
 }
@@ -218,7 +237,7 @@ constexpr uint_t codepoint_read(it_t it) noexcept
     const uint_t size = codepoint_next(it) - it;
     const uint_t ch = static_cast<char8s_t>(*it++);
 
-    uint_t cp = ch & impl::utf8_mask_table[size - 1];
+    uint_t cp = ch & ((impl::utf8_mask_table >> ((size - 1) << 3)) & 0xff);
 
     switch (size) {
     case 4:
@@ -241,7 +260,7 @@ constexpr uint_t codepoint_read(it_t it) noexcept
     const uint_t size = codepoint_next(it) - it;
     const uint_t ch = static_cast<char16_t>(*it++);
 
-    uint_t cp = ch & impl::uft16_mask_table[size - 1];
+    uint_t cp = ch & ((impl::uft16_mask_table >> ((size - 1) << 4)) & 0xffff);
 
     if (size == 2)
         cp = 0x10000 + (cp << 10) | (static_cast<char16_t>(*it++) & 0x03ff);
@@ -333,7 +352,13 @@ constexpr uint_t codepoint_count(it_t it, const it_t last) noexcept
 template<typename type_t>
 constexpr auto codepoint_count(const type_t& str) noexcept -> decltype(std::cbegin(str), std::cend(str), uint_t())
 {
-    return codepoint_count(std::cbegin(str), std::cend(str));
+    const auto beg = std::cbegin(str);
+    auto end = std::cend(str);
+
+    if constexpr (is_native_string_v<type_t>)
+        --end;
+    
+    return codepoint_count(beg, end);
 }
 
 
@@ -412,7 +437,13 @@ constexpr uint_t codeunit_count(it_t it, const it_t last) noexcept
 template<typename char_t, typename type_t>
 constexpr auto codeunit_count(const type_t& str) noexcept -> decltype(std::cbegin(str), std::cend(str), uint_t())
 {
-    return codeunit_count<char_t>(std::cbegin(str), std::cend(str));
+    const auto beg = std::cbegin(str);
+    auto end = std::cend(str);
+
+    if constexpr (is_native_string_v<type_t>)
+        --end;
+    
+    return codeunit_count<char_t>(beg, end);
 }
 
 } // namespace sutf
