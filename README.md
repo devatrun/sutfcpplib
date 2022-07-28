@@ -80,7 +80,7 @@ using namespace std::literals;
 ```
 ## String literal declarations:
 ```c++
-// Define Unicode literal 'A©←😂B®✅🥳'':
+// Define Unicode literal 'A©←😂B®✅🥳':
 auto str_utf8 = u8"\U00000041\U000000a9\U00002190\U0001f602\U00000042\U000000ae\U00002705\U0001f973"sv; // UTF-8 string 
 auto str_utf16_or_utf32 = L"\U00000041\U000000a9\U00002190\U0001f602\U00000042\U000000ae\U00002705\U0001f973"sv; // UTF-16/UTF-32 string
 auto str_utf16 = u"\U00000041\U000000a9\U00002190\U0001f602\U00000042\U000000ae\U00002705\U0001f973"sv; // UTF-16 string
