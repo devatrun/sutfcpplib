@@ -663,7 +663,7 @@ inline auto convert(const std::basic_string_view<char_t>& src, type_t& dst) -> d
     using chardst_t = typename std::iterator_traits<decltype(std::begin(dst))>::value_type;
     const uint_t dst_size = code_unit_count<chardst_t>(src);
 
-    if (dst.size() < dst_size)
+    if (std::size(dst) < dst_size)
         throw std::length_error("Destination buffer doesn't fit on the specified string after convertion.");
 
     code_point_convert(src.cbegin(), src.cend(), std::begin(dst));
