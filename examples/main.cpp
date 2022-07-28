@@ -108,11 +108,11 @@ static void code_point_support() noexcept
     std::u16string dst_utf16(code_unit_count<char16_t>(raw_utf8), u'\0');
     std::u32string dst_utf32(code_unit_count<char32_t>(raw_utf16), U'\0');
 
-    // write code point to UTF-8 format.
+    // write code point in UTF-8 format.
     assert(code_point_write(std::begin(dst_utf8), 0x0001f973) == std::begin(dst_utf8) + 4);
-    // write code point to UTF-16 format.
+    // write code point in UTF-16 format.
     assert(code_point_write(std::begin(dst_utf16), 0x0001f973) == std::begin(dst_utf16) + 2);
-    // write code point to UTF-32 format.
+    // write code point in UTF-32 format.
     assert(code_point_write(std::begin(dst_utf32), 0x0001f973) == std::begin(dst_utf32) + 1);
 
     // convert UFT-32 code point range to UTF-8 encoding.
@@ -195,6 +195,19 @@ static void string_support() noexcept
     assert(convert(raw_utf32, dst_utf8) == dst_utf8.size());
     assert(convert(str_utf8, dst_utf16) == dst_utf16.size());
     assert(convert(raw_utf16, dst_utf32) == dst_utf32.size());
+
+
+
+    // try to convert buffer to insufficient size buffer
+
+    try {
+        
+        char small[1];
+        convert(raw_utf32, small);
+        assert(false);
+
+    } catch (const std::length_error&) {
+    } 
 }
 
 
