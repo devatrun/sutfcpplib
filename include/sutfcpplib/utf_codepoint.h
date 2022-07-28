@@ -67,16 +67,12 @@ using char8s_t = char8_t;
 template<typename type_t, typename... match_t>
 constexpr bool is_any_of_v = std::disjunction_v<std::is_same<type_t, match_t>...>;
 
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // is_any_char_v
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 template<typename type_t>
 constexpr bool is_any_char_v = is_any_of_v<type_t, char, char8s_t, char16_t, wchar_t, char32_t>;
-
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // is_iterator_of
@@ -100,8 +96,6 @@ constexpr bool is_iterator_of_v = is_iterator_of<it_t, value_t...>::value;
 template<typename it_t>
 constexpr bool is_any_iterator_v = is_iterator_of_v<it_t, char, char8s_t, char16_t, char32_t, wchar_t>;
 
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // is_const_iterator_of
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -118,18 +112,27 @@ constexpr bool is_const_iterator_of_v = is_const_iterator_of<it_t, value_t...>::
 template<typename it_t>
 constexpr bool is_any_const_iterator_v = is_const_iterator_of_v<it_t, char, wchar_t, char8s_t, char16_t, char32_t>;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// is_char_array_v
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
+template<typename type_t>
+constexpr bool is_char_array_v = false;
+template<typename char_t, uint_t size>
+constexpr bool is_char_array_v<char_t (&)[size]> = is_any_char_v<char_t>;
+template<typename char_t, uint_t size>
+constexpr bool is_char_array_v<char_t[size]> = is_any_char_v<char_t>;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // is_native_string_v
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 template <typename type_t>
-constexpr bool is_native_string_v = false;
-template<typename char_t, uint_t size>
-constexpr bool is_native_string_v<char_t (&)[size]> = is_any_char_v<char_t>;
-template<typename char_t, uint_t size>
-constexpr bool is_native_string_v<char_t[size]> = is_any_char_v<char_t>;
+constexpr bool is_native_string_v = is_char_array_v<type_t>;
+template<typename char_t>
+constexpr bool is_native_string_v<const char_t*> = is_any_char_v<char_t>;
+template<typename char_t>
+constexpr bool is_native_string_v<char_t*> = is_any_char_v<char_t>;
 
 
 
@@ -138,44 +141,44 @@ constexpr bool is_native_string_v<char_t[size]> = is_any_char_v<char_t>;
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 template<typename it_t, std::enable_if_t<is_const_iterator_of_v<it_t, char, char8s_t>, int> = 0>
-constexpr it_t codepoint_next(it_t it) noexcept;
+constexpr it_t code_point_next(it_t it) noexcept;
 template<typename it_t, std::enable_if_t<is_const_iterator_of_v<it_t, char16_t> || (is_const_iterator_of_v<it_t, wchar_t> && sizeof(wchar_t) == sizeof(char16_t)), int> = 0>
-constexpr it_t codepoint_next(it_t it) noexcept;
+constexpr it_t code_point_next(it_t it) noexcept;
 template<typename it_t, std::enable_if_t<is_const_iterator_of_v<it_t, char32_t> || (is_const_iterator_of_v<it_t, wchar_t> && sizeof(wchar_t) == sizeof(char32_t)), int> = 0>
-constexpr it_t codepoint_next(it_t it) noexcept;
+constexpr it_t code_point_next(it_t it) noexcept;
 
 template<typename it_t, std::enable_if_t<is_const_iterator_of_v<it_t, char, char8s_t>, int> = 0>
-constexpr uint_t codepoint_read(it_t it) noexcept;
+constexpr uint_t code_point_read(it_t it) noexcept;
 template<typename it_t, std::enable_if_t<is_const_iterator_of_v<it_t, char16_t> || (is_const_iterator_of_v<it_t, wchar_t> && sizeof(wchar_t) == sizeof(char16_t)), int> = 0>
-constexpr uint_t codepoint_read(it_t it) noexcept;
+constexpr uint_t code_point_read(it_t it) noexcept;
 template<typename it_t, std::enable_if_t<is_const_iterator_of_v<it_t, char32_t> || (is_const_iterator_of_v<it_t, wchar_t> && sizeof(wchar_t) == sizeof(char32_t)), int> = 0>
-constexpr uint_t codepoint_read(it_t it) noexcept;
+constexpr uint_t code_point_read(it_t it) noexcept;
 
 template<typename it_t, std::enable_if_t<is_iterator_of_v<it_t, char, char8s_t>, int> = 0>
-constexpr it_t codepoint_write(it_t it, uint_t cp) noexcept;
+constexpr it_t code_point_write(it_t it, uint_t cp) noexcept;
 template<typename it_t, std::enable_if_t<is_iterator_of_v<it_t, char16_t> || (is_iterator_of_v<it_t, wchar_t> && sizeof(wchar_t) == sizeof(char16_t)), int> = 0>
-constexpr it_t codepoint_write(it_t it, uint_t cp) noexcept;
+constexpr it_t code_point_write(it_t it, uint_t cp) noexcept;
 template<typename it_t, std::enable_if_t<is_iterator_of_v<it_t, char32_t> || (is_iterator_of_v<it_t, wchar_t> && sizeof(wchar_t) == sizeof(char32_t)), int> = 0>
-constexpr it_t codepoint_write(it_t it, uint_t cp) noexcept;
+constexpr it_t code_point_write(it_t it, uint_t cp) noexcept;
 
 template<typename it_t, std::enable_if_t<is_any_const_iterator_v<it_t>, int> = 0>
-constexpr uint_t codepoint_count(it_t it, const it_t last) noexcept;
+constexpr uint_t code_point_count(it_t it, const it_t last) noexcept;
 template<typename type_t>
-constexpr auto codepoint_count(const type_t& str) noexcept -> decltype(std::cbegin(str), std::cend(str), uint_t());
+constexpr auto code_point_count(const type_t& str) noexcept -> decltype(std::cbegin(str), std::cend(str), uint_t());
 
 template<typename in_t, typename out_t, std::enable_if_t<is_any_const_iterator_v<in_t>, int> = 0, std::enable_if_t<is_any_iterator_v<out_t>, int> = 0>
-constexpr out_t codepoint_convert(in_t src, const in_t last, out_t dst) noexcept;
+constexpr out_t code_point_convert(in_t src, const in_t last, out_t dst) noexcept;
 
 template<typename char_t, std::enable_if_t<std::is_same_v<char_t, char> || std::is_same_v<char_t, char8s_t>, int> = 0>
-constexpr uint_t codeunit_count(uint_t cp) noexcept;
+constexpr uint_t code_unit_count(uint_t cp) noexcept;
 template<typename char_t, std::enable_if_t<std::is_same_v<char_t, char16_t> || (std::is_same_v<char_t, wchar_t> && sizeof(wchar_t) == sizeof(char16_t)), int> = 0>
-constexpr uint_t codeunit_count(uint_t cp) noexcept;
+constexpr uint_t code_unit_count(uint_t cp) noexcept;
 template<typename char_t, std::enable_if_t<std::is_same_v<char_t, char32_t> || (std::is_same_v<char_t, wchar_t> && sizeof(wchar_t) == sizeof(char32_t)), int> = 0>
-constexpr uint_t codeunit_count(uint_t cp) noexcept;
+constexpr uint_t code_unit_count(uint_t cp) noexcept;
 template<typename char_t, typename it_t, std::enable_if_t<is_any_const_iterator_v<it_t>, int> = 0>
-constexpr uint_t codeunit_count(it_t it, const it_t last) noexcept;
+constexpr uint_t code_unit_count(it_t it, const it_t last) noexcept;
 template<typename char_t, typename type_t>
-constexpr auto codeunit_count(const type_t& str) noexcept -> decltype(std::cbegin(str), std::cend(str), uint_t());
+constexpr auto code_unit_count(const type_t& str) noexcept -> decltype(std::cbegin(str), std::cend(str), uint_t());
 
 
 
@@ -199,7 +202,7 @@ static constexpr uint_t uft16_mask_table = 0x03ffffff;
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 template<typename it_t, std::enable_if_t<is_const_iterator_of_v<it_t, char, char8s_t>, int>>
-constexpr it_t codepoint_next(it_t it) noexcept
+constexpr it_t code_point_next(it_t it) noexcept
 {
     const uint_t ch = static_cast<char8s_t>(*it);
     const uint_t offset = ((impl::utf8_size_table >> ((ch >> 3) << 1)) & 0x3) + 1;
@@ -211,7 +214,7 @@ constexpr it_t codepoint_next(it_t it) noexcept
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename it_t, std::enable_if_t<is_const_iterator_of_v<it_t, char16_t> || (is_const_iterator_of_v<it_t, wchar_t> && sizeof(wchar_t) == sizeof(char16_t)), int>>
-constexpr it_t codepoint_next(it_t it) noexcept
+constexpr it_t code_point_next(it_t it) noexcept
 {
     const uint_t ch = static_cast<char16_t>(*it);
     const uint_t offset = ((impl::utf16_size_table >> (ch >> 10)) & 0x1) + 1;
@@ -223,7 +226,7 @@ constexpr it_t codepoint_next(it_t it) noexcept
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename it_t, std::enable_if_t<is_const_iterator_of_v<it_t, char32_t> || (is_const_iterator_of_v<it_t, wchar_t> && sizeof(wchar_t) == sizeof(char32_t)), int>>
-constexpr it_t codepoint_next(it_t it) noexcept
+constexpr it_t code_point_next(it_t it) noexcept
 {
     return it + 1;
 }
@@ -232,9 +235,9 @@ constexpr it_t codepoint_next(it_t it) noexcept
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename it_t, std::enable_if_t<is_const_iterator_of_v<it_t, char, char8s_t>, int>>
-constexpr uint_t codepoint_read(it_t it) noexcept
+constexpr uint_t code_point_read(it_t it) noexcept
 {
-    const uint_t size = codepoint_next(it) - it;
+    const uint_t size = code_point_next(it) - it;
     const uint_t ch = static_cast<char8s_t>(*it++);
 
     uint_t cp = ch & ((impl::utf8_mask_table >> ((size - 1) << 3)) & 0xff);
@@ -255,9 +258,9 @@ constexpr uint_t codepoint_read(it_t it) noexcept
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename it_t, std::enable_if_t<is_const_iterator_of_v<it_t, char16_t> || (is_const_iterator_of_v<it_t, wchar_t> && sizeof(wchar_t) == sizeof(char16_t)), int>>
-constexpr uint_t codepoint_read(it_t it) noexcept
+constexpr uint_t code_point_read(it_t it) noexcept
 {
-    const uint_t size = codepoint_next(it) - it;
+    const uint_t size = code_point_next(it) - it;
     const uint_t ch = static_cast<char16_t>(*it++);
 
     uint_t cp = ch & ((impl::uft16_mask_table >> ((size - 1) << 4)) & 0xffff);
@@ -272,7 +275,7 @@ constexpr uint_t codepoint_read(it_t it) noexcept
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename it_t, std::enable_if_t<is_const_iterator_of_v<it_t, char32_t> || (is_const_iterator_of_v<it_t, wchar_t> && sizeof(wchar_t) == sizeof(char32_t)), int>>
-constexpr uint_t codepoint_read(it_t it) noexcept
+constexpr uint_t code_point_read(it_t it) noexcept
 {
     return static_cast<uint_t>(static_cast<char32_t>(*it++));
 }
@@ -281,7 +284,7 @@ constexpr uint_t codepoint_read(it_t it) noexcept
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename it_t, std::enable_if_t<is_iterator_of_v<it_t, char, char8s_t>, int>>
-constexpr it_t codepoint_write(it_t it, uint_t cp) noexcept
+constexpr it_t code_point_write(it_t it, uint_t cp) noexcept
 {
     if (cp < 0x80) {
         *it++ = static_cast<char8s_t>(cp);
@@ -306,7 +309,7 @@ constexpr it_t codepoint_write(it_t it, uint_t cp) noexcept
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename it_t, std::enable_if_t<is_iterator_of_v<it_t, char16_t> || (is_iterator_of_v<it_t, wchar_t> && sizeof(wchar_t) == sizeof(char16_t)), int>>
-constexpr it_t codepoint_write(it_t it, uint_t cp) noexcept
+constexpr it_t code_point_write(it_t it, uint_t cp) noexcept
 {
     if (cp < 0x10000)
         *it++ = static_cast<char16_t>(cp);
@@ -322,7 +325,7 @@ constexpr it_t codepoint_write(it_t it, uint_t cp) noexcept
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename it_t, std::enable_if_t<is_iterator_of_v<it_t, char32_t> || (is_iterator_of_v<it_t, wchar_t> && sizeof(wchar_t) == sizeof(char32_t)), int>>
-constexpr it_t codepoint_write(it_t it, uint_t cp) noexcept
+constexpr it_t code_point_write(it_t it, uint_t cp) noexcept
 {
     *it++ = static_cast<char32_t>(cp);
 
@@ -333,13 +336,13 @@ constexpr it_t codepoint_write(it_t it, uint_t cp) noexcept
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename it_t, std::enable_if_t<is_any_const_iterator_v<it_t>, int>>
-constexpr uint_t codepoint_count(it_t it, const it_t last) noexcept
+constexpr uint_t code_point_count(it_t it, const it_t last) noexcept
 {
     uint_t count = 0;
 
     while (it != last) {
 
-        it = codepoint_next(it);
+        it = code_point_next(it);
         ++count;
     }
 
@@ -350,7 +353,7 @@ constexpr uint_t codepoint_count(it_t it, const it_t last) noexcept
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename type_t>
-constexpr auto codepoint_count(const type_t& str) noexcept -> decltype(std::cbegin(str), std::cend(str), uint_t())
+constexpr auto code_point_count(const type_t& str) noexcept -> decltype(std::cbegin(str), std::cend(str), uint_t())
 {
     const auto beg = std::cbegin(str);
     auto end = std::cend(str);
@@ -358,17 +361,17 @@ constexpr auto codepoint_count(const type_t& str) noexcept -> decltype(std::cbeg
     if constexpr (is_native_string_v<type_t>)
         --end;
     
-    return codepoint_count(beg, end);
+    return code_point_count(beg, end);
 }
 
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename in_t, typename out_t, std::enable_if_t<is_any_const_iterator_v<in_t>, int>, std::enable_if_t<is_any_iterator_v<out_t>, int>>
-constexpr out_t codepoint_convert(in_t src, const in_t last, out_t dst) noexcept
+constexpr out_t code_point_convert(in_t src, const in_t last, out_t dst) noexcept
 {
-    for (; src != last; src = codepoint_next(src))
-        dst = codepoint_write(dst, codepoint_read(src));
+    for (; src != last; src = code_point_next(src))
+        dst = code_point_write(dst, code_point_read(src));
 
     return dst;
 }
@@ -377,7 +380,7 @@ constexpr out_t codepoint_convert(in_t src, const in_t last, out_t dst) noexcept
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename char_t, std::enable_if_t<std::is_same_v<char_t, char> || std::is_same_v<char_t, char8s_t>, int>>
-constexpr uint_t codeunit_count(uint_t cp) noexcept
+constexpr uint_t code_unit_count(uint_t cp) noexcept
 {
     if (cp < 0x80)
         return 1;
@@ -393,7 +396,7 @@ constexpr uint_t codeunit_count(uint_t cp) noexcept
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename char_t, std::enable_if_t<std::is_same_v<char_t, char16_t> || (std::is_same_v<char_t, wchar_t> && sizeof(wchar_t) == sizeof(char16_t)), int>>
-constexpr uint_t codeunit_count(uint_t cp) noexcept
+constexpr uint_t code_unit_count(uint_t cp) noexcept
 {
     return cp < 0x10000 ? 1 : 2;
 }
@@ -402,7 +405,7 @@ constexpr uint_t codeunit_count(uint_t cp) noexcept
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename char_t, std::enable_if_t<std::is_same_v<char_t, char32_t> || (std::is_same_v<char_t, wchar_t> && sizeof(wchar_t) == sizeof(char32_t)), int>>
-constexpr uint_t codeunit_count(uint_t /*cp*/) noexcept
+constexpr uint_t code_unit_count(uint_t /*cp*/) noexcept
 {
     return 1;
 }
@@ -411,7 +414,7 @@ constexpr uint_t codeunit_count(uint_t /*cp*/) noexcept
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename char_t, typename it_t, std::enable_if_t<is_any_const_iterator_v<it_t>, int>>
-constexpr uint_t codeunit_count(it_t it, const it_t last) noexcept
+constexpr uint_t code_unit_count(it_t it, const it_t last) noexcept
 {
     if constexpr (sizeof(typename std::iterator_traits<it_t>::value_type) == sizeof(char_t)) {
 
@@ -423,8 +426,8 @@ constexpr uint_t codeunit_count(it_t it, const it_t last) noexcept
 
         while (it != last) {
 
-            count += codeunit_count<char_t>(codepoint_read(it));
-            it = codepoint_next(it);
+            count += code_unit_count<char_t>(code_point_read(it));
+            it = code_point_next(it);
         }
 
         return count;
@@ -435,7 +438,7 @@ constexpr uint_t codeunit_count(it_t it, const it_t last) noexcept
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename char_t, typename type_t>
-constexpr auto codeunit_count(const type_t& str) noexcept -> decltype(std::cbegin(str), std::cend(str), uint_t())
+constexpr auto code_unit_count(const type_t& str) noexcept -> decltype(std::cbegin(str), std::cend(str), uint_t())
 {
     const auto beg = std::cbegin(str);
     auto end = std::cend(str);
@@ -443,7 +446,7 @@ constexpr auto codeunit_count(const type_t& str) noexcept -> decltype(std::cbegi
     if constexpr (is_native_string_v<type_t>)
         --end;
     
-    return codeunit_count<char_t>(beg, end);
+    return code_unit_count<char_t>(beg, end);
 }
 
 } // namespace sutf

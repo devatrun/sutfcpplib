@@ -74,9 +74,8 @@ string to_string(const wstring_view& str);
 string to_string(const u8string_view& str);
 string to_string(const u16string_view& str);
 string to_string(const u32string_view& str);
-string to_string(const char* str);
-template<uint_t size>
-string to_string(const char (&str)[size]);
+template<typename type_t, std::enable_if_t<is_native_string_v<type_t>, int> = 0>
+string to_string(const type_t& str);
 string to_string(string str);
 template<typename char_t>
 string to_string(const std::basic_string_view<char_t>& str);
@@ -91,9 +90,8 @@ wstring to_wstring(const wstring_view& str);
 wstring to_wstring(const u8string_view& str);
 wstring to_wstring(const u16string_view& str);
 wstring to_wstring(const u32string_view& str);
-wstring to_wstring(const wchar_t* str);
-template<uint_t size>
-wstring to_wstring(const wchar_t (&str)[size]);
+template<typename type_t, std::enable_if_t<is_native_string_v<type_t>, int> = 0>
+wstring to_wstring(const type_t& str);
 wstring to_wstring(wstring str);
 template<typename char_t>
 wstring to_wstring(const std::basic_string_view<char_t>& str);
@@ -108,9 +106,8 @@ u8string to_u8string(const wstring_view& str);
 u8string to_u8string(const u8string_view& str);
 u8string to_u8string(const u16string_view& str);
 u8string to_u8string(const u32string_view& str);
-u8string to_u8string(const char8s_t* str);
-template<uint_t size>
-u8string to_u8string(const char8s_t (&str)[size]);
+template<typename type_t, std::enable_if_t<is_native_string_v<type_t>, int> = 0>
+u8string to_u8string(const type_t& str);
 u8string to_u8string(u8string str);
 template<typename char_t>
 u8string to_u8string(const std::basic_string_view<char_t>& str);
@@ -125,9 +122,8 @@ u16string to_u16string(const wstring_view& str);
 u16string to_u16string(const u8string_view& str);
 u16string to_u16string(const u16string_view& str);
 u16string to_u16string(const u32string_view& str);
-u16string to_u16string(const char16_t* str);
-template<uint_t size>
-u16string to_u16string(const char16_t (&str)[size]);
+template<typename type_t, std::enable_if_t<is_native_string_v<type_t>, int> = 0>
+u16string to_u16string(const type_t& str);
 u16string to_u16string(u16string str);
 template<typename char_t>
 u16string to_u16string(const std::basic_string_view<char_t>& str);
@@ -142,9 +138,8 @@ u32string to_u32string(const wstring_view& str);
 u32string to_u32string(const u8string_view& str);
 u32string to_u32string(const u16string_view& str);
 u32string to_u32string(const u32string_view& str);
-u32string to_u32string(const char32_t* str);
-template<uint_t size>
-u32string to_u32string(const char32_t (&str)[size]);
+template<typename type_t, std::enable_if_t<is_native_string_v<type_t>, int> = 0>
+u32string to_u32string(const type_t& str);
 u32string to_u32string(u32string str);
 template<typename char_t>
 u32string to_u32string(const std::basic_string_view<char_t>& str);
@@ -171,6 +166,8 @@ template<typename type_t>
 auto convert(const u16string_view& src, type_t& dst) -> decltype(std::begin(dst), std::end(dst), uint_t());
 template<typename type_t>
 auto convert(const u32string_view& src, type_t& dst) -> decltype(std::begin(dst), std::end(dst), uint_t());
+template<typename typesrc_t, typename typedst_t, std::enable_if_t<is_native_string_v<typesrc_t>, int> = 0>
+auto convert(const typesrc_t& src, typedst_t& dst) -> decltype(std::begin(dst), std::end(dst), uint_t());
 template<typename char_t, typename type_t>
 auto convert(const std::basic_string_view<char_t>& src, type_t& dst) -> decltype(std::begin(dst), std::end(dst), uint_t());
 
@@ -222,18 +219,13 @@ inline string to_string(const u32string_view& str)
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-inline string to_string(const char* str)
+template<typename type_t, std::enable_if_t<is_native_string_v<type_t>, int>>
+inline string to_string(const type_t& str)
 {
-    return to_string(string_view(str));
-}
-
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-template<uint_t size>
-inline string to_string(const char (&str)[size])
-{
-    return to_string(string_view(str, size));
+    if constexpr (is_char_array_v<type_t>)
+        return to_string(std::basic_string_view(str, std::size(str) - 1));
+    else
+        return to_string(std::basic_string_view(str));
 }
 
 
@@ -306,18 +298,13 @@ inline wstring to_wstring(const u32string_view& str)
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-inline wstring to_wstring(const wchar_t* str)
+template<typename type_t, std::enable_if_t<is_native_string_v<type_t>, int>>
+inline wstring to_wstring(const type_t& str)
 {
-    return to_wstring(wstring_view(str));
-}
-
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-template<uint_t size>
-inline wstring to_wstring(const wchar_t (&str)[size])
-{
-    return to_wstring(wstring_view(str, size));
+    if constexpr (is_char_array_v<type_t>)
+        return to_wstring(std::basic_string_view(str, std::size(str) - 1));
+    else
+        return to_wstring(std::basic_string_view(str));
 }
 
 
@@ -390,18 +377,13 @@ inline u8string to_u8string(const u32string_view& str)
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-inline u8string to_u8string(const char8s_t* str)
+template<typename type_t, std::enable_if_t<is_native_string_v<type_t>, int>>
+inline u8string to_u8string(const type_t& str)
 {
-    return to_u8string(u8string_view(str));
-}
-
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-template<uint_t size>
-inline u8string to_u8string(const char8s_t (&str)[size])
-{
-    return to_u8string(u8string_view(str, size));
+    if constexpr (is_char_array_v<type_t>)
+        return to_u8string(std::basic_string_view(str, std::size(str) - 1));
+    else
+        return to_u8string(std::basic_string_view(str));
 }
 
 
@@ -475,18 +457,13 @@ inline u16string to_u16string(const u32string_view& str)
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-inline u16string to_u16string(const char16_t* str)
+template<typename type_t, std::enable_if_t<is_native_string_v<type_t>, int>>
+inline u16string to_u16string(const type_t& str)
 {
-    return to_u16string(u16string_view(str));
-}
-
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-template<uint_t size>
-inline u16string to_u16string(const char16_t (&str)[size])
-{
-    return to_u16string(u16string_view(str, size));
+    if constexpr (is_char_array_v<type_t>)
+        return to_u16string(std::basic_string_view(str, std::size(str) - 1));
+    else
+        return to_u16string(std::basic_string_view(str));
 }
 
 
@@ -560,18 +537,13 @@ inline u32string to_u32string(const u32string_view& str)
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-inline u32string to_u32string(const char32_t* str)
+template<typename type_t, std::enable_if_t<is_native_string_v<type_t>, int>>
+inline u32string to_u32string(const type_t& str)
 {
-    return to_u32string(u32string_view(str));
-}
-
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-template<uint_t size>
-inline u32string to_u32string(const char32_t (&str)[size])
-{
-    return to_u32string(u32string_view(str, size));
+    if constexpr (is_char_array_v<type_t>)
+        return to_u32string(std::basic_string_view(str, std::size(str) - 1));
+    else
+        return to_u32string(std::basic_string_view(str));
 }
 
 
@@ -618,9 +590,9 @@ template<typename char_t, typename it_t, std::enable_if_t<is_any_const_iterator_
 inline std::basic_string<char_t> to_anystring(it_t str, it_t last)
 {
     std::basic_string<char_t> out;
-    out.resize(codeunit_count<char_t>(str, last));
+    out.resize(code_unit_count<char_t>(str, last));
 
-    codepoint_convert(str, last, out.begin());
+    code_point_convert(str, last, out.begin());
 
     return out;
 }
@@ -673,16 +645,28 @@ inline auto convert(const u32string_view& src, type_t& dst) -> decltype(std::beg
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+template<typename typesrc_t, typename typedst_t, std::enable_if_t<is_native_string_v<typesrc_t>, int>>
+inline auto convert(const typesrc_t& src, typedst_t& dst) -> decltype(std::begin(dst), std::end(dst), uint_t())
+{
+    if constexpr (is_char_array_v<typesrc_t>)
+        return convert(std::basic_string_view(src, std::size(src) - 1), dst);
+    else
+        return convert(std::basic_string_view(src), dst);
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename char_t, typename type_t>
 inline auto convert(const std::basic_string_view<char_t>& src, type_t& dst) -> decltype(std::begin(dst), std::end(dst), uint_t())
 {
     using chardst_t = typename std::iterator_traits<decltype(std::begin(dst))>::value_type;
-    const uint_t dst_size = codeunit_count<chardst_t>(src);
+    const uint_t dst_size = code_unit_count<chardst_t>(src);
 
     if (dst.size() < dst_size)
         throw std::length_error("Destination buffer doesn't fit on the specified string after convertion.");
 
-    codepoint_convert(src.cbegin(), src.cend(), std::begin(dst));
+    code_point_convert(src.cbegin(), src.cend(), std::begin(dst));
 
     return dst_size;
 }
